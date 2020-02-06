@@ -9,8 +9,7 @@ if(!empty($_FILES['uploaded_file']))
   if(move_uploaded_file($_FILES['uploaded_file']['tmp_name'], $path)) {
     $_POST['score_file'] =basename( $_FILES['uploaded_file']['name']);
   } else{
-      echo "There was an error uploading the file, please try again!<br>";
-      exit;
+      exit("There was an error uploading the file, please try again!");
   }
 }
 //Define the file to read
@@ -22,7 +21,14 @@ $advantage = [
 ];
 
 $fh = @fopen(FILE_ROUTE.$score_file,'r');
-$ln = (int)rtrim(fgets($fh));
+$lnStr = rtrim(fgets($fh));
+if (!is_numeric($lnStr)) {
+  exit("Error: the first line need to be an integer equal or lower than 10000");
+}
+if (!is_int((int)$lnStr)) {
+  exit("Error: the first line need to be an integer equal or lower than 10000");
+}
+$ln = (int)$lnStr;
 if($ln < 0 || $ln > 10000)
   exit("Error: the first line need to be an integer equal or lower than 10000");
 $arr = file(FILE_ROUTE.$score_file, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
@@ -36,8 +42,10 @@ for ($i=0; $i < $ln; $i++) {
     // echo "{$lineround}<hr>";
     $tempScore = explode(" ", $lineround);
     // var_dump($tempScore);
+    $advantage["p1"][$validcases] = 0;
+    $advantage["p1"][$validcases] = 0;
     $higher = array_keys($tempScore,max($tempScore))[0] + 1;
-    $advantage["p".$higher][] = abs($tempScore[0] - $tempScore[1]);
+    $advantage["p".$higher][$validcases] = abs($tempScore[0] - $tempScore[1]);
     $validcases++;
     // echo "p{$higher} is the winner of the round with ".abs($tempScore[0] - $tempScore[1])." advantage<hr>";
   }else {
@@ -50,7 +58,15 @@ if ($ln != $validcases) {
 }
 
 $outputFile = fopen(FILE_ROUTE."outputP2.txt", "w");
-if ( max($advantage["p1"]) > max($advantage["p2"]) ) {
+if (max($advantage["p1"]) == max($advantage["p2"])) {
+  $roundP1 = array_keys($advantage["p1"],max($advantage["p1"]))[0];
+  $roundP2 = array_keys($advantage["p2"],max($advantage["p2"]))[0];
+  if ($roundP1 < $roundP2) {
+    fwrite($outputFile, "1 ".max($advantage["p1"]));
+  }else {
+    fwrite($outputFile, "2 ".max($advantage["p2"]));
+  }
+}elseif ( max($advantage["p1"]) > max($advantage["p2"]) ) {
   fwrite($outputFile, "1 ".max($advantage["p1"]));
 }else {
   fwrite($outputFile, "2 ".max($advantage["p2"]));
